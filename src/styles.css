@@ -61,6 +61,11 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+@theme inline {
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+}
+
 :root {
   --radius: 0.625rem;
   /* BusinessHQ light palette: warm white surface, deep navy ink, teal primary */
