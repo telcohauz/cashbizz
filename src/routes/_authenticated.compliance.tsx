@@ -42,7 +42,7 @@ function Compliance() {
   });
 
   const setStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status }: { id: string; status: "pending" | "in_progress" | "completed" | "overdue" }) => {
       const { error } = await supabase.from("compliance_items").update({ status }).eq("id", id);
       if (error) throw error;
     },
@@ -112,7 +112,7 @@ function Compliance() {
                     </div>
                     <div className="flex items-center gap-2">
                       <StatusBadge status={it.status} />
-                      <Select value={it.status} onValueChange={(v) => setStatus.mutate({ id: it.id, status: v })}>
+                      <Select value={it.status} onValueChange={(v) => setStatus.mutate({ id: it.id, status: v as any })}>
                         <SelectTrigger className="w-36 h-8 text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           {["pending", "in_progress", "completed", "overdue"].map((s) => <SelectItem key={s} value={s}>{s.replace("_", " ")}</SelectItem>)}
