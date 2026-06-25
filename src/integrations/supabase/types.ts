@@ -14,16 +14,305 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_chats: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          id: string
+          messages: Json
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          messages?: Json
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          messages?: Json
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_chats_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          business_type: string | null
+          country: string
+          created_at: string
+          id: string
+          industry: string | null
+          name: string
+          owner_id: string
+          registration_no: string | null
+          tax_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_type?: string | null
+          country?: string
+          created_at?: string
+          id?: string
+          industry?: string | null
+          name: string
+          owner_id: string
+          registration_no?: string | null
+          tax_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_type?: string | null
+          country?: string
+          created_at?: string
+          id?: string
+          industry?: string | null
+          name?: string
+          owner_id?: string
+          registration_no?: string | null
+          tax_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      company_members: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["company_role"]
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["company_role"]
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["company_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_members_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_items: {
+        Row: {
+          category: string | null
+          company_id: string
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          status: Database["public"]["Enums"]["compliance_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          company_id: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["compliance_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["compliance_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          category: Database["public"]["Enums"]["doc_category"]
+          company_id: string
+          created_at: string
+          id: string
+          mime_type: string | null
+          name: string
+          size_bytes: number | null
+          storage_path: string | null
+          tags: string[] | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["doc_category"]
+          company_id: string
+          created_at?: string
+          id?: string
+          mime_type?: string | null
+          name: string
+          size_bytes?: number | null
+          storage_path?: string | null
+          tags?: string[] | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["doc_category"]
+          company_id?: string
+          created_at?: string
+          id?: string
+          mime_type?: string | null
+          name?: string
+          size_bytes?: number | null
+          storage_path?: string | null
+          tags?: string[] | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      licenses: {
+        Row: {
+          company_id: string
+          created_at: string
+          expires_on: string | null
+          id: string
+          issued_on: string | null
+          issuer: string | null
+          name: string
+          notes: string | null
+          reference_no: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          expires_on?: string | null
+          id?: string
+          issued_on?: string | null
+          issuer?: string | null
+          name: string
+          notes?: string | null
+          reference_no?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          expires_on?: string | null
+          id?: string
+          issued_on?: string | null
+          issuer?: string | null
+          name?: string
+          notes?: string | null
+          reference_no?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "licenses_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          active_company_id: string | null
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          active_company_id?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          active_company_id?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_company_role: {
+        Args: {
+          _company: string
+          _roles: Database["public"]["Enums"]["company_role"][]
+          _user: string
+        }
+        Returns: boolean
+      }
+      is_company_member: {
+        Args: { _company: string; _user: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      company_role: "owner" | "admin" | "manager" | "staff" | "viewer"
+      compliance_status: "pending" | "in_progress" | "completed" | "overdue"
+      doc_category:
+        | "tax"
+        | "hr"
+        | "contracts"
+        | "licenses"
+        | "finance"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +439,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      company_role: ["owner", "admin", "manager", "staff", "viewer"],
+      compliance_status: ["pending", "in_progress", "completed", "overdue"],
+      doc_category: ["tax", "hr", "contracts", "licenses", "finance", "other"],
+    },
   },
 } as const
