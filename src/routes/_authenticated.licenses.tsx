@@ -24,7 +24,7 @@ function Licenses() {
     queryKey: ["licenses", company?.id],
     enabled: !!company,
     queryFn: async () => {
-      const { data, error } = await supabase.from("licenses").select("*").eq("company_id", company!.id).order("expiry_date", { ascending: true, nullsFirst: false });
+      const { data, error } = await supabase.from("licenses").select("*").eq("company_id", company!.id).order("expires_on", { ascending: true, nullsFirst: false });
       if (error) throw error;
       return data ?? [];
     },
@@ -45,15 +45,15 @@ function Licenses() {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {rows.map((l) => {
-              const days = l.expiry_date ? Math.ceil((new Date(l.expiry_date).getTime() - Date.now()) / 86400000) : null;
+              const days = l.expires_on ? Math.ceil((new Date(l.expires_on).getTime() - Date.now()) / 86400000) : null;
               const tone = days == null ? "secondary" : days < 0 ? "destructive" : days < 30 ? "outline" : "secondary";
               return (
                 <Card key={l.id}><CardContent className="pt-5">
                   <div className="font-medium">{l.name}</div>
-                  <div className="text-xs text-muted-foreground mt-1">{l.issuing_authority ?? "—"}</div>
+                  <div className="text-xs text-muted-foreground mt-1">{l.issuer ?? "—"}</div>
                   <div className="mt-3 flex items-center justify-between">
                     <Badge variant={tone as any}>{days == null ? "No expiry" : days < 0 ? `Expired ${-days}d ago` : `Expires in ${days}d`}</Badge>
-                    {l.license_number && <span className="text-xs text-muted-foreground">{l.license_number}</span>}
+                    {l.reference_no && <span className="text-xs text-muted-foreground">{l.reference_no}</span>}
                   </div>
                 </CardContent></Card>
               );
@@ -73,7 +73,7 @@ function NewLicense({ companyId, onSaved }: { companyId?: string; onSaved: () =>
   const [expiry, setExpiry] = useState("");
   const save = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("licenses").insert({ company_id: companyId!, name, license_number: num || null, issuing_authority: auth || null, expiry_date: expiry || null });
+      const { error } = await supabase.from("licenses").insert({ company_id: companyId!, name, reference_no: num || null, issuer: auth || null, expires_on: expiry || null });
       if (error) throw error;
     },
     onSuccess: () => { setOpen(false); setName(""); setNum(""); setAuth(""); setExpiry(""); onSaved(); toast.success("License added"); },
