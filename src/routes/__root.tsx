@@ -83,10 +83,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "BusinessHQ Malaysia — Run your business in one place" },
       { name: "description", content: "AI-powered operating system for SMEs. Compliance, payroll, finance, documents and grants in one workspace." },
       { name: "author", content: "BusinessHQ" },
-      { property: "og:title", content: "BusinessHQ Malaysia" },
-      { property: "og:description", content: "AI-powered operating system for SMEs across Malaysia and SEA." },
+      { property: "og:title", content: "BusinessHQ Malaysia — Run your business in one place" },
+      { property: "og:description", content: "AI-powered operating system for SMEs. Compliance, payroll, finance, documents and grants in one workspace." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "BusinessHQ Malaysia — Run your business in one place" },
+      { name: "twitter:description", content: "AI-powered operating system for SMEs. Compliance, payroll, finance, documents and grants in one workspace." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5456fe5b-5eee-451e-a46a-96fa2ad37b14/id-preview-84dcee67--21f98224-3f96-4dc2-9ab5-c9200664beaf.lovable.app-1782410282397.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5456fe5b-5eee-451e-a46a-96fa2ad37b14/id-preview-84dcee67--21f98224-3f96-4dc2-9ab5-c9200664beaf.lovable.app-1782410282397.png" },
     ],
     links: [
       {
