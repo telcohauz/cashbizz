@@ -1,5 +1,4 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { PlaceholderModule } from "@/components/PlaceholderModule";
@@ -11,10 +10,9 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 function AdminGate() {
   const navigate = useNavigate();
-  const check = useServerFn(assertAdminAccess);
   const { data, isLoading, isError } = useQuery({
     queryKey: ["admin-access-check"],
-    queryFn: () => check(),
+    queryFn: () => assertAdminAccess(),
     retry: false,
   });
 
