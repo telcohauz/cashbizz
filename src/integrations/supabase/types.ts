@@ -91,6 +91,48 @@ export type Database = {
         }
         Relationships: []
       }
+      company_insert_failures: {
+        Row: {
+          attempted_payload: Json
+          created_at: string
+          error_code: string | null
+          error_details: string | null
+          error_hint: string | null
+          error_message: string | null
+          id: string
+          route: string | null
+          session_user_available: boolean
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attempted_payload: Json
+          created_at?: string
+          error_code?: string | null
+          error_details?: string | null
+          error_hint?: string | null
+          error_message?: string | null
+          id?: string
+          route?: string | null
+          session_user_available: boolean
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attempted_payload?: Json
+          created_at?: string
+          error_code?: string | null
+          error_details?: string | null
+          error_hint?: string | null
+          error_message?: string | null
+          id?: string
+          route?: string | null
+          session_user_available?: boolean
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       company_members: {
         Row: {
           company_id: string
