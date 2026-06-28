@@ -102,7 +102,7 @@ function Onboarding() {
       await supabase.from("company_insert_failures").insert({
         user_id: user?.id ?? null,
         session_user_available: args.sessionUserAvailable,
-        attempted_payload: args.payload,
+        attempted_payload: args.payload as any,
         error_code: args.error.code ?? null,
         error_message: args.error.message ?? null,
         error_details: args.error.details ?? null,
