@@ -48,49 +48,110 @@ function Onboarding() {
 
   const submit = async () => {
     setBusy(true);
-    const payload = {
-      name,
-      country,
-      business_type: businessType,
-      registration_no: reg || null,
-      tax_id: tax || null,
-      owner_id: user?.id ?? null,
-    };
+
+    // Verify user is still authenticated
     if (!user) {
       setBusy(false);
-      await logCompanyInsertFailure({
-        sessionUserAvailable: false,
-        payload,
-        error: { code: "no_session", message: "No authenticated session at submit time" },
-      });
       toast.error("Your session expired. Please sign in again.");
       navigate({ to: "/auth", replace: true });
       return;
     }
-    const { data, error } = await supabase
-      .from("companies")
-      .insert({ name, country, business_type: businessType, registration_no: reg || null, tax_id: tax || null, owner_id: user.id })
-      .select()
-      .single();
-    setBusy(false);
-    if (error) {
-      console.error("[company-insert-failed]", { payload, error, sessionUserAvailable: !!user });
+
+    // Validate required fields
+    if (!name.trim()) {
+      toast.error("Company name is required");
+      setBusy(false);
+      return;
+    }
+
+    try {
+      // Step 1: Create company with owner_id = auth.uid()
+      // RLS policy "companies owner insert" requires: auth.uid() = owner_id
+      const { data: companyData, error: companyError } = await supabase
+        .from("companies")
+        .insert({
+          name: name.trim(),
+          country,
+          business_type: businessType,
+          registration_no: reg || null,
+          tax_id: tax || null,
+          owner_id: user.id, // Must match auth.uid() for RLS policy
+        })
+        .select()
+        .single();
+
+      if (companyError || !companyData) {
+        console.error("[onboarding] Company creation failed", {
+          error: companyError,
+          user_id: user.id,
+          payload: { name, country, businessType, reg, tax },
+        });
+
+        await logCompanyInsertFailure({
+          sessionUserAvailable: true,
+          payload: { name, country, businessType, reg, tax },
+          error: {
+            code: companyError?.code ?? "unknown",
+            message: companyError?.message ?? "Unknown error",
+            details: (companyError as any)?.details ?? null,
+            hint: (companyError as any)?.hint ?? null,
+          },
+        });
+
+        toast.error(companyError?.message || "Failed to create company. Please try again.");
+        setBusy(false);
+        return;
+      }
+
+      console.log("[onboarding] Company created successfully", {
+        company_id: companyData.id,
+        owner_id: user.id,
+      });
+
+      // Step 2: Update profile with active_company_id
+      // The trigger "add_owner_as_member()" should have already added user to company_members
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ active_company_id: companyData.id })
+        .eq("id", user.id);
+
+      if (profileError) {
+        console.warn("[onboarding] Profile update failed (non-fatal)", {
+          error: profileError,
+          user_id: user.id,
+          company_id: companyData.id,
+        });
+        // Don't fail here; the company was created successfully
+        // User can still proceed to dashboard
+      }
+
+      // Step 3: Invalidate queries and navigate
+      await qc.invalidateQueries({ queryKey: ["companies"] });
+
+      toast.success("Company created successfully!");
+      navigate({ to: "/dashboard", replace: true });
+    } catch (err: any) {
+      console.error("[onboarding] Unexpected error during onboarding", {
+        error: err,
+        user_id: user.id,
+        message: err.message,
+      });
+
       await logCompanyInsertFailure({
-        sessionUserAvailable: !!user,
-        payload,
+        sessionUserAvailable: true,
+        payload: { name, country, businessType, reg, tax },
         error: {
-          code: error.code,
-          message: error.message,
-          details: (error as any).details ?? null,
-          hint: (error as any).hint ?? null,
+          code: err.code || "unknown",
+          message: err.message || "Unknown error",
+          details: null,
+          hint: null,
         },
       });
-      return toast.error(error.message);
+
+      toast.error(err.message || "An unexpected error occurred. Please try again.");
+    } finally {
+      setBusy(false);
     }
-    await supabase.from("profiles").update({ active_company_id: data!.id }).eq("id", user.id);
-    await qc.invalidateQueries({ queryKey: ["companies"] });
-    toast.success("Company created");
-    navigate({ to: "/dashboard", replace: true });
   };
 
   async function logCompanyInsertFailure(args: {
@@ -111,7 +172,7 @@ function Onboarding() {
         route: typeof window !== "undefined" ? window.location.pathname : null,
       });
     } catch (e) {
-      console.error("[company-insert-failure-log-failed]", e);
+      console.error("[onboarding] Failed to log company insert failure", e);
     }
   }
 
@@ -121,7 +182,12 @@ function Onboarding() {
         <div className="mb-6 flex items-center gap-2">
           {steps.map((s, i) => (
             <div key={s} className="flex items-center gap-2 flex-1">
-              <div className={`h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-xs font-semibold ${i <= step ? "text-primary-foreground" : "bg-muted text-muted-foreground"}`} style={i <= step ? { background: "var(--gradient-primary)" } : undefined}>
+              <div
+                className={`h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-xs font-semibold ${
+                  i <= step ? "text-primary-foreground" : "bg-muted text-muted-foreground"
+                }`}
+                style={i <= step ? { background: "var(--gradient-primary)" } : {}}
+              >
                 {i < step ? <Check className="h-3.5 w-3.5" /> : i + 1}
               </div>
               {i < steps.length - 1 && <div className={`h-px flex-1 ${i < step ? "bg-primary" : "bg-border"}`} />}
@@ -142,7 +208,9 @@ function Onboarding() {
             <div>
               <Label>Country</Label>
               <Select value={country} onValueChange={setCountry}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>{countries.map((c) => <SelectItem key={c.v} value={c.v}>{c.n}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -151,10 +219,14 @@ function Onboarding() {
             <div>
               <Label>Business type</Label>
               <Select value={businessType} onValueChange={setBusinessType}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {["Sdn Bhd", "Enterprise / Sole Proprietor", "Partnership", "LLP", "Public Ltd", "Other"].map((t) => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -162,13 +234,22 @@ function Onboarding() {
           )}
           {step === 2 && (
             <div className="space-y-3">
-              <div><Label>Company name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme Sdn Bhd" /></div>
-              <div><Label>Registration number</Label><Input value={reg} onChange={(e) => setReg(e.target.value)} placeholder="202301012345" /></div>
+              <div>
+                <Label>Company name</Label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme Sdn Bhd" />
+              </div>
+              <div>
+                <Label>Registration number</Label>
+                <Input value={reg} onChange={(e) => setReg(e.target.value)} placeholder="202301012345" />
+              </div>
             </div>
           )}
           {step === 3 && (
             <div className="space-y-3">
-              <div><Label>Tax ID / LHDN No</Label><Input value={tax} onChange={(e) => setTax(e.target.value)} placeholder="C2584521234" /></div>
+              <div>
+                <Label>Tax ID / LHDN No</Label>
+                <Input value={tax} onChange={(e) => setTax(e.target.value)} placeholder="C2584521234" />
+              </div>
             </div>
           )}
           {step === 4 && (
@@ -182,11 +263,17 @@ function Onboarding() {
           )}
 
           <div className="mt-6 flex justify-between gap-2">
-            <Button variant="ghost" disabled={step === 0} onClick={() => setStep((s) => s - 1)}>Back</Button>
+            <Button variant="ghost" disabled={step === 0} onClick={() => setStep((s) => s - 1)}>
+              Back
+            </Button>
             {step < 4 ? (
-              <Button disabled={step === 2 && !name.trim()} onClick={() => setStep((s) => s + 1)}>Continue</Button>
+              <Button disabled={step === 2 && !name.trim()} onClick={() => setStep((s) => s + 1)}>
+                Continue
+              </Button>
             ) : (
-              <Button onClick={submit} disabled={busy || !name.trim()}>{busy ? "Creating…" : "Create workspace"}</Button>
+              <Button onClick={submit} disabled={busy || !name.trim()}>
+                {busy ? "Creating…" : "Create workspace"}
+              </Button>
             )}
           </div>
         </div>
