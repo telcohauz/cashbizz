@@ -47,20 +47,73 @@ function Onboarding() {
   const steps = ["Country", "Business", "Company", "Tax", "Done"];
 
   const submit = async () => {
-    if (!user) return;
     setBusy(true);
+    const payload = {
+      name,
+      country,
+      business_type: businessType,
+      registration_no: reg || null,
+      tax_id: tax || null,
+      owner_id: user?.id ?? null,
+    };
+    if (!user) {
+      setBusy(false);
+      await logCompanyInsertFailure({
+        sessionUserAvailable: false,
+        payload,
+        error: { code: "no_session", message: "No authenticated session at submit time" },
+      });
+      toast.error("Your session expired. Please sign in again.");
+      navigate({ to: "/auth", replace: true });
+      return;
+    }
     const { data, error } = await supabase
       .from("companies")
       .insert({ name, country, business_type: businessType, registration_no: reg || null, tax_id: tax || null, owner_id: user.id })
       .select()
       .single();
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      console.error("[company-insert-failed]", { payload, error, sessionUserAvailable: !!user });
+      await logCompanyInsertFailure({
+        sessionUserAvailable: !!user,
+        payload,
+        error: {
+          code: error.code,
+          message: error.message,
+          details: (error as any).details ?? null,
+          hint: (error as any).hint ?? null,
+        },
+      });
+      return toast.error(error.message);
+    }
     await supabase.from("profiles").update({ active_company_id: data!.id }).eq("id", user.id);
     await qc.invalidateQueries({ queryKey: ["companies"] });
     toast.success("Company created");
     navigate({ to: "/dashboard", replace: true });
   };
+
+  async function logCompanyInsertFailure(args: {
+    sessionUserAvailable: boolean;
+    payload: Record<string, unknown>;
+    error: { code?: string | null; message?: string | null; details?: string | null; hint?: string | null };
+  }) {
+    try {
+      await supabase.from("company_insert_failures").insert({
+        user_id: user?.id ?? null,
+        session_user_available: args.sessionUserAvailable,
+        attempted_payload: args.payload,
+        error_code: args.error.code ?? null,
+        error_message: args.error.message ?? null,
+        error_details: args.error.details ?? null,
+        error_hint: args.error.hint ?? null,
+        user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+        route: typeof window !== "undefined" ? window.location.pathname : null,
+      });
+    } catch (e) {
+      console.error("[company-insert-failure-log-failed]", e);
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
