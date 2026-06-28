@@ -30,6 +30,7 @@ import { Route as AuthenticatedCompanyRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAssetsRouteImport } from './routes/_authenticated.assets'
 import { Route as AuthenticatedAiAdvisorRouteImport } from './routes/_authenticated.ai-advisor'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
+import { Route as AuthenticatedAdminInsertFailuresRouteImport } from './routes/_authenticated.admin.insert-failures'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
@@ -135,12 +136,18 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAdminInsertFailuresRoute =
+  AuthenticatedAdminInsertFailuresRouteImport.update({
+    id: '/insert-failures',
+    path: '/insert-failures',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/ai-advisor': typeof AuthenticatedAiAdvisorRoute
   '/assets': typeof AuthenticatedAssetsRoute
   '/company': typeof AuthenticatedCompanyRoute
@@ -157,12 +164,13 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/staff': typeof AuthenticatedStaffRoute
+  '/admin/insert-failures': typeof AuthenticatedAdminInsertFailuresRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/ai-advisor': typeof AuthenticatedAiAdvisorRoute
   '/assets': typeof AuthenticatedAssetsRoute
   '/company': typeof AuthenticatedCompanyRoute
@@ -179,6 +187,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/staff': typeof AuthenticatedStaffRoute
+  '/admin/insert-failures': typeof AuthenticatedAdminInsertFailuresRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -186,7 +195,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/ai-advisor': typeof AuthenticatedAiAdvisorRoute
   '/_authenticated/assets': typeof AuthenticatedAssetsRoute
   '/_authenticated/company': typeof AuthenticatedCompanyRoute
@@ -203,6 +212,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/staff': typeof AuthenticatedStaffRoute
+  '/_authenticated/admin/insert-failures': typeof AuthenticatedAdminInsertFailuresRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/setup'
     | '/staff'
+    | '/admin/insert-failures'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -249,6 +260,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/setup'
     | '/staff'
+    | '/admin/insert-failures'
   id:
     | '__root__'
     | '/'
@@ -272,6 +284,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/setup'
     | '/_authenticated/staff'
+    | '/_authenticated/admin/insert-failures'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -430,11 +443,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/admin/insert-failures': {
+      id: '/_authenticated/admin/insert-failures'
+      path: '/insert-failures'
+      fullPath: '/admin/insert-failures'
+      preLoaderRoute: typeof AuthenticatedAdminInsertFailuresRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminInsertFailuresRoute: typeof AuthenticatedAdminInsertFailuresRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminInsertFailuresRoute: AuthenticatedAdminInsertFailuresRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
 interface AuthenticatedRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAiAdvisorRoute: typeof AuthenticatedAiAdvisorRoute
   AuthenticatedAssetsRoute: typeof AuthenticatedAssetsRoute
   AuthenticatedCompanyRoute: typeof AuthenticatedCompanyRoute
@@ -454,7 +485,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedAiAdvisorRoute: AuthenticatedAiAdvisorRoute,
   AuthenticatedAssetsRoute: AuthenticatedAssetsRoute,
   AuthenticatedCompanyRoute: AuthenticatedCompanyRoute,
